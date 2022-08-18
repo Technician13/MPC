@@ -32,6 +32,8 @@ MPC::MPC(Eigen::MatrixXd A_, Eigen::MatrixXd B_,
 
     A.resize(dim_state, dim_state);
     B.resize(dim_state, dim_control);
+    A = A_;
+    B = B_;
 
     #ifdef DLQR_TEST_PRINT_A
         std::cout << "----------------------------------------- A -----------------------------------------" << std::endl;

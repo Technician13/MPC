@@ -31,6 +31,8 @@ class MPC
         MPC(Eigen::MatrixXd A_, Eigen::MatrixXd B_,
             int dim_state_, int dim_control_, double T_);
         ~MPC();
+        void MPCInit();
+        void MPCRun();
 };
 
 #endif
