@@ -15,6 +15,16 @@ add_executable(${PROJ_NAME} ${SOURCE_LIST} ${HEADER_LIST})
 
 include_directories(${CMAKE_SOURCE_DIR}) 
 
+#Eigen
 set(EIGEN_INCLUDE_DIRS /usr/include/eigen3)
-
 include_directories(${EIGEN_INCLUDE_DIRS}) 
+
+#OSQP
+find_package(osqp REQUIRED)
+
+set(OSQP_INCLUDE_DIRS /usr/local/include/osqp)
+include_directories(${OSQP_INCLUDE_DIRS})
+
+set(OSQP_LIBRARY_DIRS /usr/local/lib)
+link_directories(${OSQP_LIBRARY_DIRS})
+target_link_libraries(${PROJ_NAME} osqp)
