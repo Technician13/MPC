@@ -29,9 +29,32 @@ int main()
      B << 0.5 * T * T,
           T;
 
-     MPC *mpc = new MPC(A, B, 2, 1, T, horizon);
-     mpc->MPCInit();
+
+
+     MPC *mpc = new MPC(A, B, 2, 1, horizon);
+
+
+
+     Eigen::MatrixXd CST;
+     CST.setIdentity(3, 3);
+
+     Eigen::VectorXd l;
+     l.resize(3);
+     l << -2.0, -2.0, -2.0;
+
+     Eigen::VectorXd u;
+     u.resize(3);
+     u << 2.0, 2.0, 2.0;
+
+
+     
+     mpc->MPCInit(CST, l, u);
+
+
+
      mpc->MPCRun(x_cur, x_ref);
+
+
 
      delete mpc;
      return 0;

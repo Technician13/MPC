@@ -4,30 +4,37 @@
 #include <iostream>
 #include <Eigen/Dense>
 #include <osqp.h>
+#include "QPSolver.hpp"
 
 /* ************************************ option start ************************************ */
 /* print A */
-#define MPC_TEST_PRINT_A
+// #define MPC_TEST_PRINT_A
 /* print B */
-#define MPC_TEST_PRINT_B
+// #define MPC_TEST_PRINT_B
 /* print Phi */
-#define MPC_TEST_PRINT_PHI
+// #define MPC_TEST_PRINT_PHI
 /* print Psi */
-#define MPC_TEST_PRINT_PSI
+// #define MPC_TEST_PRINT_PSI
 /* print w1 */
-#define MPC_TEST_PRINT_W1
+// #define MPC_TEST_PRINT_W1
 /* print w2 */
-#define MPC_TEST_PRINT_W2
+// #define MPC_TEST_PRINT_W2
 /* print H */
-#define MPC_TEST_PRINT_H
+// #define MPC_TEST_PRINT_H
 /* print U */
-#define MPC_TEST_PRINT_G
+// #define MPC_TEST_PRINT_G
 /* print E */
-#define MPC_TEST_PRINT_E
+// #define MPC_TEST_PRINT_E
 /* print Q */
 #define MPC_TEST_PRINT_Q
 /* print f */
 #define MPC_TEST_PRINT_F
+/* print CST */
+#define MPC_TEST_PRINT_CST
+/* print L */
+#define MPC_TEST_PRINT_L
+/* print U */
+#define MPC_TEST_PRINT_U
 /* ************************************ option end ************************************ */
 
 class MPC
@@ -37,8 +44,6 @@ class MPC
         int dim_state;
         /* dim of control vector */
         int dim_control;
-        /* sample period */
-        double T;
         /* prediction time domain */
         int horizon;
         /* matrix A */
@@ -61,15 +66,23 @@ class MPC
         Eigen::MatrixXd Q;
         /* vector f */
         Eigen::VectorXd f;
+        /* matrix CST */
+        Eigen::MatrixXd CST;
+        /* vector l */
+        Eigen::VectorXd l;
+        /* vector u */
+        Eigen::VectorXd u;
+
+        QPSolver *qpsolver;
 
     protected:
         
     public:
         MPC(Eigen::MatrixXd A_, Eigen::MatrixXd B_,
             int dim_state_, int dim_control_, 
-            double T_, int horizon_);
+            int horizon_);
         ~MPC();
-        void MPCInit();
+        void MPCInit(Eigen::MatrixXd CST_, Eigen::VectorXd l_, Eigen::VectorXd u_);
         void MPCRun(Eigen::VectorXd x_cur_,
                     Eigen::VectorXd x_ref_);
 };

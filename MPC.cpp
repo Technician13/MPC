@@ -13,13 +13,12 @@ void PrintMatrix(Eigen::MatrixXd mat)
 }
 
 /* constructor */
-MPC::MPC(Eigen::MatrixXd A_, Eigen::MatrixXd B_,
+MPC::MPC(Eigen::MatrixXd A_, Eigen::MatrixXd B_, 
          int dim_state_, int dim_control_, 
-         double T_, int horizon_)
+         int horizon_)
 {
     dim_state = dim_state_;
     dim_control = dim_control_;
-    T = T_;
     horizon = horizon_;
 
     /* error checking */
@@ -36,7 +35,7 @@ MPC::MPC(Eigen::MatrixXd A_, Eigen::MatrixXd B_,
     B.resize(dim_state, dim_control);
     A = A_;
     B = B_;
-    
+
     #ifdef MPC_TEST_PRINT_A
         std::cout << "----------------------------------------- A -----------------------------------------" << std::endl;
         PrintMatrix(A);
@@ -51,11 +50,13 @@ MPC::MPC(Eigen::MatrixXd A_, Eigen::MatrixXd B_,
 
 /* destructor */
 MPC::~MPC()
-{
+{   
+    delete qpsolver;
+    
     std::cout << "MPC Die ..." << std::endl;
 }
 
-void MPC::MPCInit()
+void MPC::MPCInit(Eigen::MatrixXd CST_, Eigen::VectorXd l_, Eigen::VectorXd u_)
 {
     Phi.setZero(horizon * dim_state, dim_state);
     Psi.setZero(horizon * dim_state, horizon * dim_control);
@@ -102,6 +103,19 @@ void MPC::MPCInit()
     Q.setZero(horizon * dim_control, horizon * dim_control);
     f.setZero(horizon * dim_control);
 
+    /* error checking */
+    if((CST_.cols()) != dim_control * horizon)
+        std::cout << "CST is in wrong rows !!!" << std::endl; 
+    if((l_.size()) != u_.size())
+        std::cout << "l & u are in different size !!!" << std::endl; 
+
+    CST.resize(CST_.rows(), dim_control * horizon);
+    l.resize(l_.size());
+    u.resize(u_.size());
+    CST = CST_;
+    l = l_;
+    u = u_;
+
     #ifdef MPC_TEST_PRINT_PHI
         std::cout << "----------------------------------------- PHI -----------------------------------------" << std::endl;
         std::cout << "Phi is a " << Phi.rows() << " x " << Phi.cols() << " matrix" << std::endl;
@@ -133,6 +147,8 @@ void MPC::MPCInit()
         PrintMatrix(g);
     #endif
 
+    qpsolver = new QPSolver(Q, f, CST, l, u);
+
     std::cout << "MPC Init Done" << std::endl;
 } 
 
@@ -155,6 +171,17 @@ void MPC::MPCRun(Eigen::VectorXd x_cur_,
     /* QP problem objective function: 0.5 * U.transpose() * Q * U + U.transpos() * f ------------------------------------------------------------------------ */
 
 
+
+
+
+
+
+
+
+
+
+
+
     #ifdef MPC_TEST_PRINT_E
         std::cout << "----------------------------------------- E -----------------------------------------" << std::endl;
         for(int i = 0 ; i < horizon * dim_state ; i++)
@@ -169,5 +196,20 @@ void MPC::MPCRun(Eigen::VectorXd x_cur_,
         std::cout << "----------------------------------------- f -----------------------------------------" << std::endl;
         for(int i = 0 ; i < horizon * dim_control ; i++)
             std::cout << f(i) << std::endl;
+    #endif
+    #ifdef MPC_TEST_PRINT_CST
+        std::cout << "----------------------------------------- CST -----------------------------------------" << std::endl;
+        std::cout << "CST is a " << CST.rows() << " x " << CST.cols() << " matrix" << std::endl;
+        PrintMatrix(CST);
+    #endif
+    #ifdef MPC_TEST_PRINT_L
+        std::cout << "----------------------------------------- l -----------------------------------------" << std::endl;
+        for(int i = 0 ; i < l.size() ; i++)
+            std::cout << l(i) << std::endl;
+    #endif
+    #ifdef MPC_TEST_PRINT_U
+        std::cout << "----------------------------------------- u -----------------------------------------" << std::endl;
+        for(int i = 0 ; i < u.size() ; i++)
+            std::cout << u(i) << std::endl;
     #endif
 }
