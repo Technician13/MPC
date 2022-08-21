@@ -13,37 +13,17 @@ void PrintMatrix(Eigen::MatrixXd mat)
 }
 
 /* constructor */
-MPC::MPC(Eigen::MatrixXd A_, Eigen::MatrixXd B_, 
-         int dim_state_, int dim_control_, 
+MPC::MPC(int dim_state_, int dim_control_, 
          int horizon_)
 {
     dim_state = dim_state_;
     dim_control = dim_control_;
-    horizon = horizon_;
-
-    /* error checking */
-    if((A_.rows()) != dim_state)
-        std::cout << "A is in wrong rows !!!" << std::endl; 
-    if((A_.cols()) != dim_state)
-        std::cout << "A is in wrong cols !!!" << std::endl; 
-    if((B_.rows()) != dim_state)
-        std::cout << "B is in wrong rows !!!" << std::endl; 
-    if((B_.cols()) != dim_control)
-        std::cout << "B is in wrong cols !!!" << std::endl; 
+    horizon = horizon_; 
 
     A.resize(dim_state, dim_state);
     B.resize(dim_state, dim_control);
-    A = A_;
-    B = B_;
 
-    #ifdef MPC_TEST_PRINT_A
-        std::cout << "----------------------------------------- A -----------------------------------------" << std::endl;
-        PrintMatrix(A);
-    #endif
-    #ifdef MPC_TEST_PRINT_B
-        std::cout << "----------------------------------------- B -----------------------------------------" << std::endl;
-        PrintMatrix(B);
-    #endif
+    qpsolver = new QPSolver();
 
     std::cout << "MPC Birth Done" << std::endl;
 }
@@ -56,13 +36,38 @@ MPC::~MPC()
     std::cout << "MPC Die ..." << std::endl;
 }
 
-void MPC::MPCInit(Eigen::MatrixXd CST_, Eigen::VectorXd l_, Eigen::VectorXd u_)
+
+void MPC::MPCRun(Eigen::MatrixXd A_, Eigen::MatrixXd B_,
+                 Eigen::MatrixXd CST_, Eigen::VectorXd l_, Eigen::VectorXd u_,
+                 Eigen::VectorXd x_cur_,
+                 Eigen::VectorXd x_ref_)
 {
+    /* error checking */
+    if((A_.rows()) != dim_state)
+        std::cout << "A is in wrong rows !!!" << std::endl; 
+    if((A_.cols()) != dim_state)
+        std::cout << "A is in wrong cols !!!" << std::endl; 
+    if((B_.rows()) != dim_state)
+        std::cout << "B is in wrong rows !!!" << std::endl; 
+    if((B_.cols()) != dim_control)
+        std::cout << "B is in wrong cols !!!" << std::endl; 
+  
+    A = A_;
+    B = B_;
+
+    #ifdef MPC_TEST_PRINT_A
+        std::cout << "----------------------------------------- A -----------------------------------------" << std::endl;
+        PrintMatrix(A);
+    #endif
+    #ifdef MPC_TEST_PRINT_B
+        std::cout << "----------------------------------------- B -----------------------------------------" << std::endl;
+        PrintMatrix(B);
+    #endif
+
     Phi.setZero(horizon * dim_state, dim_state);
     Psi.setZero(horizon * dim_state, horizon * dim_control);
     Eigen::MatrixXd temp_phi = A;
     Eigen::MatrixXd temp_psi;
-    
     for(int i = 0 ; i < horizon ; i++)
     {   
         temp_psi = temp_phi;
@@ -79,6 +84,17 @@ void MPC::MPCInit(Eigen::MatrixXd CST_, Eigen::VectorXd l_, Eigen::VectorXd u_)
 
         temp_phi *= A;
     }
+
+    #ifdef MPC_TEST_PRINT_PHI
+        std::cout << "----------------------------------------- PHI -----------------------------------------" << std::endl;
+        std::cout << "Phi is a " << Phi.rows() << " x " << Phi.cols() << " matrix" << std::endl;
+        PrintMatrix(Phi);
+    #endif
+    #ifdef MPC_TEST_PRINT_PSI
+        std::cout << "----------------------------------------- PSI -----------------------------------------" << std::endl;
+        std::cout << "Psi is a " << Psi.rows() << " x " << Psi.cols() << " matrix" << std::endl;
+        PrintMatrix(Psi);
+    #endif
 
     /* load H & U ------------------------------------------------------------------------ */
     w1.setZero(dim_state, dim_state);
@@ -99,33 +115,6 @@ void MPC::MPCInit(Eigen::MatrixXd CST_, Eigen::VectorXd l_, Eigen::VectorXd u_)
         g.block(i * dim_control, i * dim_control, dim_control, dim_control) = w2;
     }
 
-    E.setZero(horizon * dim_state);
-    Q.setZero(horizon * dim_control, horizon * dim_control);
-    f.setZero(horizon * dim_control);
-
-    /* error checking */
-    if((CST_.cols()) != dim_control * horizon)
-        std::cout << "CST is in wrong rows !!!" << std::endl; 
-    if((l_.size()) != u_.size())
-        std::cout << "l & u are in different size !!!" << std::endl; 
-
-    CST.resize(CST_.rows(), dim_control * horizon);
-    l.resize(l_.size());
-    u.resize(u_.size());
-    CST = CST_;
-    l = l_;
-    u = u_;
-
-    #ifdef MPC_TEST_PRINT_PHI
-        std::cout << "----------------------------------------- PHI -----------------------------------------" << std::endl;
-        std::cout << "Phi is a " << Phi.rows() << " x " << Phi.cols() << " matrix" << std::endl;
-        PrintMatrix(Phi);
-    #endif
-    #ifdef MPC_TEST_PRINT_PSI
-        std::cout << "----------------------------------------- PSI -----------------------------------------" << std::endl;
-        std::cout << "Psi is a " << Psi.rows() << " x " << Psi.cols() << " matrix" << std::endl;
-        PrintMatrix(Psi);
-    #endif
     #ifdef MPC_TEST_PRINT_W1
         std::cout << "----------------------------------------- w1 -----------------------------------------" << std::endl;
         std::cout << "w1 is a " << w1.rows() << " x " << w1.cols() << " matrix" << std::endl;
@@ -147,14 +136,10 @@ void MPC::MPCInit(Eigen::MatrixXd CST_, Eigen::VectorXd l_, Eigen::VectorXd u_)
         PrintMatrix(g);
     #endif
 
-    qpsolver = new QPSolver(Q, f, CST, l, u);
+    E.setZero(horizon * dim_state);
+    Q.setZero(horizon * dim_control, horizon * dim_control);
+    f.setZero(horizon * dim_control);
 
-    std::cout << "MPC Init Done" << std::endl;
-} 
-
-void MPC::MPCRun(Eigen::VectorXd x_cur_,
-                 Eigen::VectorXd x_ref_)
-{
     /* error checking */
     if((x_cur_.size()) != dim_state)
         std::cout << "x_cur is in wrong size !!!" << std::endl; 
@@ -167,20 +152,6 @@ void MPC::MPCRun(Eigen::VectorXd x_cur_,
     /* load Q & f ------------------------------------------------------------------------ */
     Q = 2.0 * (Psi.transpose() * H * Psi + g);
     f = 2.0 * Psi.transpose() * H.transpose() * E;
-
-    /* QP problem objective function: 0.5 * U.transpose() * Q * U + U.transpos() * f ------------------------------------------------------------------------ */
-
-
-
-
-
-
-
-
-
-
-
-
 
     #ifdef MPC_TEST_PRINT_E
         std::cout << "----------------------------------------- E -----------------------------------------" << std::endl;
@@ -197,6 +168,20 @@ void MPC::MPCRun(Eigen::VectorXd x_cur_,
         for(int i = 0 ; i < horizon * dim_control ; i++)
             std::cout << f(i) << std::endl;
     #endif
+
+    /* error checking */
+    if((CST_.cols()) != dim_control * horizon)
+        std::cout << "CST is in wrong rows !!!" << std::endl; 
+    if((l_.size()) != u_.size())
+        std::cout << "l & u are in different size !!!" << std::endl; 
+
+    CST.resize(CST_.rows(), dim_control * horizon);
+    l.resize(l_.size());
+    u.resize(u_.size());
+    CST = CST_;
+    l = l_;
+    u = u_;
+
     #ifdef MPC_TEST_PRINT_CST
         std::cout << "----------------------------------------- CST -----------------------------------------" << std::endl;
         std::cout << "CST is a " << CST.rows() << " x " << CST.cols() << " matrix" << std::endl;
@@ -212,4 +197,18 @@ void MPC::MPCRun(Eigen::VectorXd x_cur_,
         for(int i = 0 ; i < u.size() ; i++)
             std::cout << u(i) << std::endl;
     #endif
+
+    /* QP problem ------------------------------------------------------------------------ */
+    res = qpsolver->QPSolverRun(Q, f, CST, l, u);
+
+    #ifdef MPC_TEST_PRINT_OPT_RES
+        std::cout << "----------------------------------------- opt res -----------------------------------------" << std::endl;
+        for(int i = 0 ; i < res.size() ; i++)
+            std::cout << res(i) << std::endl;
+    #endif
+}
+
+Eigen::VectorXd MPC::MPCGetControl()
+{
+    return res.head(dim_control);
 }

@@ -26,15 +26,17 @@
 /* print E */
 // #define MPC_TEST_PRINT_E
 /* print Q */
-#define MPC_TEST_PRINT_Q
+// #define MPC_TEST_PRINT_Q
 /* print f */
-#define MPC_TEST_PRINT_F
+// #define MPC_TEST_PRINT_F
 /* print CST */
-#define MPC_TEST_PRINT_CST
+// #define MPC_TEST_PRINT_CST
 /* print L */
-#define MPC_TEST_PRINT_L
+// #define MPC_TEST_PRINT_L
 /* print U */
-#define MPC_TEST_PRINT_U
+// #define MPC_TEST_PRINT_U
+/* print opt result */
+// #define MPC_TEST_PRINT_OPT_RES
 /* ************************************ option end ************************************ */
 
 class MPC
@@ -78,13 +80,17 @@ class MPC
     protected:
         
     public:
-        MPC(Eigen::MatrixXd A_, Eigen::MatrixXd B_,
-            int dim_state_, int dim_control_, 
+        /* result of QP */
+        Eigen::VectorXd res;
+
+        MPC(int dim_state_, int dim_control_, 
             int horizon_);
         ~MPC();
-        void MPCInit(Eigen::MatrixXd CST_, Eigen::VectorXd l_, Eigen::VectorXd u_);
-        void MPCRun(Eigen::VectorXd x_cur_,
+        void MPCRun(Eigen::MatrixXd A_, Eigen::MatrixXd B_,
+                    Eigen::MatrixXd CST_, Eigen::VectorXd l_, Eigen::VectorXd u_,
+                    Eigen::VectorXd x_cur_,
                     Eigen::VectorXd x_ref_);
+        Eigen::VectorXd MPCGetControl();
 };
 
 #endif

@@ -2,7 +2,7 @@
 
 int main()
 {
-     double T = 0.5;
+     double T = 0.2;
      int horizon = 3;
 
      Eigen::VectorXd x_cur;
@@ -29,12 +29,6 @@ int main()
      B << 0.5 * T * T,
           T;
 
-
-
-     MPC *mpc = new MPC(A, B, 2, 1, horizon);
-
-
-
      Eigen::MatrixXd CST;
      CST.setIdentity(3, 3);
 
@@ -46,15 +40,26 @@ int main()
      u.resize(3);
      u << 2.0, 2.0, 2.0;
 
+     Eigen::VectorXd control;
 
+     MPC *mpc = new MPC(2, 1, horizon);
      
-     mpc->MPCInit(CST, l, u);
+     int cnt = 100;
+     while(cnt > 0)
+     {
+          mpc->MPCRun(A, B, 
+                 CST, l, u,
+                 x_cur, 
+                 x_ref);
+          control = mpc->MPCGetControl();
 
+          std::cout << "control is :  " << control << "    ";
 
+          x_cur = A * x_cur + B * control;
 
-     mpc->MPCRun(x_cur, x_ref);
-
-
+          std::cout << x_cur(0) << "    " << x_cur(1) << std::endl;
+          cnt--;
+     }
 
      delete mpc;
      return 0;
