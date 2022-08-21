@@ -2,7 +2,7 @@
 
 int main()
 {
-     double T = 0.2;
+     double T = 0.5;
      int horizon = 3;
 
      Eigen::VectorXd x_cur;
@@ -44,7 +44,7 @@ int main()
 
      MPC *mpc = new MPC(2, 1, horizon);
      
-     int cnt = 100;
+     int cnt = 20;
      while(cnt > 0)
      {
           mpc->MPCRun(A, B, 
