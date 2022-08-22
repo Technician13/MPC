@@ -38,7 +38,7 @@ $$\boldsymbol{g} =  \boldsymbol{1}_{3\times3}$$
 
 
 # Appendix A    
-* Sorry, for some special reasons, the formula markdown source code of the derivation process is not open source for the time being.        
+* Sorry, due to inconsistent identification of formula format, the formula markdown source code of the derivation process is given in file `MPCformula.txt`, here only use the figure for convinent.        
 
 <div align=center>
   <img src="img/derivation.png">
